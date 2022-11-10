@@ -45,5 +45,4 @@ https://drive.google.com/file/d/1A4a-G02HBzSOVacWs5yEa6z0Xr44LO9M/view?usp=drive
   ---
 
    ## Video
-
-  <video src='https://raw.githubusercontent.com/chondromollikaahmed/AD-HOC-ESP32-ESP8266/master/peer_to_peer.mp4' width=180/>
+  https://raw.githubusercontent.com/chondromollikaahmed/AD-HOC-ESP32-ESP8266/master/peer_to_peer.mp4
