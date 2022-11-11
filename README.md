@@ -7,6 +7,23 @@
 ## Follow The Link For Video Details
 https://drive.google.com/file/d/1A4a-G02HBzSOVacWs5yEa6z0Xr44LO9M/view?usp=drivesdk
 
+
+> We will further try to add raspberry pi as a node . Make rpi compatible if it can work with espnow protocall. 
+>> https://hackaday.io/project/161896-linux-espnow 
+
+
+
+## What it can do ?
+1. Send and receives data form and to the esp devices in ranges.
+2. As Example a a light and a boot button of esp devices  (GPIO0) is used .
+3. If a devices press the boot button it changes the states of light (if on changed state will be off and vice versa)
+4. Simultaneously it sends "on"/"off" data to all the esp devices in ranges and the other devices show actions by received buffer .
+5. For exchanging data between devices serial monitor is used .
+> In that case we used two device with pc for serial monitor(two COM port) and another one with an 0.96" OLED display to see the recieved data .
+6. Light can also be controlled by sending "on" or "off" from serial montor .
+> [For Video illustration ](https://drive.google.com/file/d/1A4a-G02HBzSOVacWs5yEa6z0Xr44LO9M/view?usp=drivesdk/ "Hardware Illustration")
+
+ > [Exchanging Data with Serial Monitor](https://raw.githubusercontent.com/chondromollikaahmed/AD-HOC-ESP32-ESP8266/master/peer_to_peer.mp4 "PeerToPeer.mp4")
 ## Component Used
 
 
