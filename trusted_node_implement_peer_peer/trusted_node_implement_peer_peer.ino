@@ -9,7 +9,6 @@
 #endif
 
 
-#include <vector>
 
 // code for gps module 
 #include <Wire.h>
@@ -63,9 +62,6 @@ String compassData;
 
 double minDist = 100000000.0;
 int closestCar = -1,decision=-1;
-
-
-
 
 // defining structure of to send gps data
 typedef struct {
@@ -133,30 +129,47 @@ int findGPSDataIndex(String macAddress) {
   return -1;
 }
 
-
+String overtake ="";
 void DecideOvertake()
 {
 
-    int index =findGPSDataIndex(WiFi.macAddress());
+    int index =findGPSDataIndex(WiFi.softAPmacAddress());
     double front1stAccelaration = gpsDataArray[index-1].accelaration;
     double front2ndAcclaration = gpsDataArray[index-2].accelaration;
-
-    double gapBetweentwoCar = haversine(gpsDataArray[index-1].latitude,gpsDataArray[index-1].longitude, gpsDataArray[index-2].latitude, gpsDataArray[index-2].longitude);
-    gapBetweentwoCar=gapBetweentwoCar*1000; //in meter
+    if(index>1){
+     double gapBetweentwoCar = haversine(gpsDataArray[index-1].latitude,gpsDataArray[index-1].longitude, gpsDataArray[index-2].latitude, gpsDataArray[index-2].longitude); 
+       gapBetweentwoCar=gapBetweentwoCar*1000; //in meter
 
     double carLength; // need to give a cars min length in meter
 
     if(gapBetweentwoCar>=(carLength*1.5) && front2ndAcclaration>=front1stAccelaration){
-        Serial.println("Overtake");
+        Serial.println("Ot");
+        overtake="S";
+    }
+        else{
+              Serial.println("no");
+              overtake="N";
+    }
+    }
+    else if(index==0){
+              Serial.println("SU");
+              overtake="S";
+    }
+    else{
+              Serial.println("Ot");
+              overtake="S";
     }
 
 }
 
 void CalculateDistanceAndPredictSpeed()
 {
-  for (int i = 0; i < nodeCount; i++)
+   
+  Serial.println("Number Of GPS DATA :" + String (numGPSData));
+  for (int i = 1; i < numGPSData; i++)
     {
         double dist = haversine(gps.location.lat(), gps.location.lng(), gpsDataArray[i].latitude, gpsDataArray[i].longitude);
+        Serial.println("Haversine Distance Between "+ String (dist));
         if (dist < minDist)
         {
             minDist = dist;
@@ -169,6 +182,9 @@ void CalculateDistanceAndPredictSpeed()
     Serial.println(closestCar);
     double predicted_cover_dist = (/*[GPS Speed self car in km/hr]*/ gps.speed.kmph() * 2 *(1000/3600)) + (0.5 * acceleration * pow(2,2));    //#s=u*t+0.5*a*pow(t,2)
     minDist = (/*[GPS Speed front min distance car in km/hr]*/ gpsDataArray[closestCar].speed * 2 *(1000/3600)) + (0.5 * acceleration * pow(2,2));
+
+    Serial.println("Predicted Cover Distance : " + String(predicted_cover_dist) );
+    Serial.println("min Distance :"+ String( minDist));
     if(predicted_cover_dist <= minDist/2)
     {
         decision= 3;
@@ -192,9 +208,13 @@ float calculateAcceleration(float timeInterval) {
   if (gps.location.isValid() == 1)
   {
   float currentSpeed = gps.speed.kmph() * 3.6;  // speed in m/s
-  float acceleration = (currentSpeed - previousSpeed) / timeInterval;
+  
+  Serial.println("Speed "+ String(currentSpeed));
+  Serial.println("Previous Speed "+ String(previousSpeed-currentSpeed));
+  acceleration = (currentSpeed - previousSpeed) / timeInterval;
   previousSpeed = currentSpeed; 
   }
+  Serial.println("Aclleartion :"+ String(acceleration));
   return acceleration;
 }
 
@@ -264,13 +284,13 @@ void print_speed()
     
     display.setTextSize(1);
     display.setCursor(0, 50);
-    display.print("SAT:");
+    display.print("OVT:");
     display.setCursor(25, 50);
-    display.print(gps.satellites.value());
+    display.print(overtake+String(numGPSData));
 
     display.setTextSize(1);
     display.setCursor(70, 50);
-    display.print("Decission:");
+    display.print("De:");
     display.setCursor(95, 50);
     //display.print(gps.altitude.meters(), 0);
     display.print(decision);
@@ -341,6 +361,8 @@ void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen)
 {
    // Check if incoming data is a GPSData struct
    if (dataLen == sizeof(GPSData)) {
+
+     Serial.println(" ENtered in the GPSDATA SHell ");
     // Convert incoming data to GPSData struct
     GPSData gpsData;
     memcpy(&gpsData, data, sizeof(gpsData));
@@ -379,14 +401,14 @@ void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen)
       }
 
       // Delete GPSData struct from array if not present in destmac array
-      if (!present) {
-        for (int k = i - numDeleted; k < numGPSData - 1; k++) {
-          gpsDataArray[k] = gpsDataArray[k+1];
-        }
-        numGPSData--;
-        numDeleted++;
-        i--;
-      }
+      // if (!present) {
+      //   for (int k = i - numDeleted; k < numGPSData - 1; k++) {
+      //     gpsDataArray[k] = gpsDataArray[k+1];
+      //   }
+      //   numGPSData--;
+      //   numDeleted++;
+      //   i--;
+      // }
    }
    }
 
@@ -480,13 +502,13 @@ void broadGps()
     }
 
     //prepare message 
-     gpsData.latitude = gps.location.lat(); 
-     gpsData.longitude = gps.location.lng();
-     Serial.println("Lat  ____>" + String(gpsData.latitude));
-     Serial.println("Lon  ____>" + String(gpsData.longitude));
-     gpsData.speed =gps.speed.kmph() ; 
-     gpsData.accelaration=acceleration;
-     gpsData.relativePosition=RelativePositionFromFog(gpsData.latitude,gpsData.longitude);
+     gpsDataSend.latitude = gps.location.lat(); 
+     gpsDataSend.longitude = gps.location.lng();
+     Serial.println("Lat  ____>" + String(gpsDataSend.latitude,6));
+     Serial.println("Lon  ____>" + String(gpsDataSend.longitude,6));
+     gpsDataSend.speed =gps.speed.kmph() ; 
+     gpsDataSend.accelaration=acceleration;
+     gpsDataSend.relativePosition=RelativePositionFromFog(gpsDataSend.latitude,gpsDataSend.longitude);
   // Send message
   esp_err_t result = esp_now_send(broadcastAddress,(const uint8_t*) &gpsDataSend, sizeof(gpsDataSend));
 
@@ -668,6 +690,18 @@ void setup()
 
   // LED Output
   pinMode(STATUS_LED, OUTPUT);
+
+     gpsData.macAddr= WiFi.softAPmacAddress();
+     gpsData.latitude = gps.location.lat(); 
+     gpsData.longitude = gps.location.lng();
+     Serial.println("Lat  ____>" + String(gpsData.latitude));
+     Serial.println("Lon  ____>" + String(gpsData.longitude));
+     gpsData.speed =gps.speed.kmph() ; 
+     gpsData.accelaration=acceleration;
+     gpsData.relativePosition=RelativePositionFromFog(gpsData.latitude,gpsData.longitude);
+     gpsDataArray[numGPSData++] = gpsData;
+
+  
 }
 
 
@@ -720,6 +754,8 @@ void loop()
   previousMillis = currentMillis;
  }
 
+ Serial.println("Accelaeration "+ String(acceleration));
+
    //recvWithEndMarker();
 //   if (newData)
 //   {
@@ -727,8 +763,11 @@ void loop()
 //    newData = false;
 //   }
 
-
+  broadGps();
   getGpsData();
+
+  DecideFrontBack();
+  DecideOvertake();
 
   CalculateDistanceAndPredictSpeed();
   if (digitalRead(STATUS_BUTTON))
