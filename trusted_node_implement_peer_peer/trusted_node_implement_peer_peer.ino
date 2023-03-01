@@ -166,7 +166,7 @@ void CalculateDistanceAndPredictSpeed()
 {
    
   Serial.println("Number Of GPS DATA :" + String (numGPSData));
-  for (int i = 1; i < numGPSData; i++)
+  /*for (int i = 1; i < numGPSData; i++)
     {
         double dist = haversine(gps.location.lat(), gps.location.lng(), gpsDataArray[i].latitude, gpsDataArray[i].longitude);
         Serial.println("Haversine Distance Between "+ String (dist));
@@ -175,13 +175,14 @@ void CalculateDistanceAndPredictSpeed()
             minDist = dist;
             closestCar = i;
         }
-    }
+    }*/
+    int index =findGPSDataIndex(WiFi.softAPmacAddress());
 
     // Print out the closest car
     Serial.print("Closest car: ");
     Serial.println(closestCar);
     double predicted_cover_dist = (/*[GPS Speed self car in km/hr]*/ gps.speed.kmph() * 2 *(1000/3600)) + (0.5 * acceleration * pow(2,2));    //#s=u*t+0.5*a*pow(t,2)
-    minDist = (/*[GPS Speed front min distance car in km/hr]*/ gpsDataArray[closestCar].speed * 2 *(1000/3600)) + (0.5 * acceleration * pow(2,2));
+    minDist = (/*[GPS Speed front min distance car in km/hr]*/ gpsDataArray[index-1].speed * 2 *(1000/3600)) + (0.5 * acceleration * pow(2,2));
 
     Serial.println("Predicted Cover Distance : " + String(predicted_cover_dist) );
     Serial.println("min Distance :"+ String( minDist));
@@ -742,7 +743,9 @@ void showNewData() {
     }
 }
 
+void accident_detection(){
 
+}
 
 
 
