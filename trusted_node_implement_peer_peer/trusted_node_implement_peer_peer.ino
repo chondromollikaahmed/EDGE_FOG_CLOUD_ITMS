@@ -143,20 +143,20 @@ void DecideOvertake()
     double carLength; // need to give a cars min length in meter
 
     if(gapBetweentwoCar>=(carLength*1.5) && front2ndAcclaration>=front1stAccelaration){
-        Serial.println("Ot");
+        Serial.println("Overtake");
         overtake="S";
     }
         else{
-              Serial.println("no");
+              Serial.println("Don't Overtake");
               overtake="N";
     }
     }
     else if(index==0){
-              Serial.println("SU");
+              Serial.println("Speed Up");
               overtake="S";
     }
     else{
-              Serial.println("Ot");
+              Serial.println("Overtake");
               overtake="S";
     }
 
