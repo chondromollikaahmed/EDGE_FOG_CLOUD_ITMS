@@ -214,7 +214,7 @@ float calculateAcceleration(float timeInterval)
 {
   if (gps.location.isValid() == 1)
   {
-    float currentSpeed = gps.speed.kmph() * 3.6; // speed in m/s
+    float currentSpeed = gps.speed.kmph() / 3.6; // speed in m/s
 
     Serial.println("Speed " + String(currentSpeed));
     Serial.println("Previous Speed " + String(previousSpeed - currentSpeed));
