@@ -188,19 +188,19 @@ void CalculateDistanceAndPredictSpeed()
   Serial.print("Closest car: ");
   Serial.println(closestCar);
   double predicted_cover_dist = (/*[GPS Speed self car in km/hr]*/ gps.speed.kmph() * 2 * (1000 / 3600)) + (0.5 * acceleration * pow(2, 2)); // #s=u*t+0.5*a*pow(t,2)
-  minDist = (/*[GPS Speed front min distance car in km/hr]*/ gpsDataArray[index - 1].speed * 2 * (1000 / 3600)) + (0.5 * acceleration * pow(2, 2));
-
+  double front_car_predicted_cover_dist = (/*[GPS Speed front min distance car in km/hr]*/ gpsDataArray[index - 1].speed * 2 * (1000 / 3600)) + (0.5 * acceleration * pow(2, 2));
+  minDist = haversine(gps.location.lat(), gps.location.lng(), gpsDataArray[index-1].latitude, gpsDataArray[index-1].longitude) + front_car_predicted_cover_dist; 
   Serial.println("Predicted Cover Distance : " + String(predicted_cover_dist));
-  Serial.println("min Distance :" + String(minDist));
+  Serial.println("Front car Cover Distance :" + String(front_car_predicted_cover_dist));
   if (predicted_cover_dist <= minDist / 2)
   {
     decision = 3;
   }
-  else if (predicted_cover_dist <= minDist / 2 and predicted_cover_dist > minDist / 2)
+  else if (predicted_cover_dist <= minDist and predicted_cover_dist > minDist / 2)
   {
     decision = 2;
   }
-  else if (predicted_cover_dist > minDist and predicted_cover_dist <= minDist / 2)
+  else if (predicted_cover_dist > minDist and predicted_cover_dist <= minDist * 1.5)
   {
     decision = 1;
   }
