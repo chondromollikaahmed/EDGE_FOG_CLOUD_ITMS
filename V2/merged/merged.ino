@@ -143,16 +143,47 @@ void DecideOvertake()
 {
 
   int index = findGPSDataIndex(WiFi.softAPmacAddress());
-  double front1stAccelaration = gpsDataArray[index - 1].accelaration;
-  double front2ndAcclaration = gpsDataArray[index - 2].accelaration;
+ 
+  int flagf=0;
+  int flago=0;
+  int indexOfOther=index-1;
+  int front1stindex,front2ndindex,opp1stindex;
+  while(indexOfOther!=0){
+
+    if((gpsDataArray[indexOfOther].direction==gpsDataArray[index].direction)&&flagf<1){
+       double front1stAccelaration = gpsDataArray[indexOfOther].accelaration;
+       front1stindex=indexOfOther;
+       flagf==1;
+    }
+    else if((gpsDataArray[indexOfOther].direction==gpsDataArray[index].direction)&&flagf<2){
+       double front2ndAccelaration = gpsDataArray[indexOfOther].accelaration;
+       front2ndindex=indexOfOther;
+       flagf==2;
+    }
+   else if((gpsDataArray[indexOfOther].direction!=gpsDataArray[index].direction)&&flago<1){
+       double opposite1stAccelaration = gpsDataArray[indexOfOther].accelaration;
+       opp1stindex=indexOfOther;
+       flago==1;
+    }
+  else if(flagf==2 && flago==1)
+   break;
+  indexOfOther--;
+  }
+
+
+  //double front1stAccelaration = gpsDataArray[index - 1].accelaration;
+  //double front2ndAcclaration = gpsDataArray[index - 2].accelaration;
   if (index > 1)
   {
-    double gapBetweentwoCar = haversine(gpsDataArray[index - 1].latitude, gpsDataArray[index - 1].longitude, gpsDataArray[index - 2].latitude, gpsDataArray[index - 2].longitude);
+    double gapBetweentwoCar = haversine(gpsDataArray[front1stindex].latitude, gpsDataArray[front1stindex].longitude, gpsDataArray[front2ndindex].latitude, gpsDataArray[front2ndindex].longitude);
     gapBetweentwoCar = gapBetweentwoCar * 1000; // in meter
+    
+    double gapBetweentwoCarop = haversine(gpsDataArray[front2ndindex].latitude, gpsDataArray[front2ndindex].longitude, gpsDataArray[opp1stindex].latitude, gpsDataArray[opp1stindex].longitude);
+    gapBetweentwoCarop = gapBetweentwoCarop * 1000; // in meter
 
     double carLength; // need to give a cars min length in meter
 
-    if (gapBetweentwoCar >= (carLength * 1.5) && front2ndAcclaration >= front1stAccelaration)
+    if (gapBetweentwoCar >= (carLength * 1.5) && front2ndAcclaration >= front1stAccelaration && gapBetweentwoCarop<1)
     {
       Serial.println("Overtake");
       overtake = "S";
