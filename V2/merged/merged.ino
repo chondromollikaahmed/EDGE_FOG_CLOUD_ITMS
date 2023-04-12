@@ -160,12 +160,15 @@ void DecideOvertake()
        front2ndindex=indexOfOther;
        flagf==2;
     }
-   else if((gpsDataArray[indexOfOther].direction!=gpsDataArray[index].direction)&&flago<1){
+    else if((gpsDataArray[indexOfOther].direction==gpsDataArray[index].direction)&&flagf<3){
+       flagf==3;
+    }
+    else if((gpsDataArray[indexOfOther].direction!=gpsDataArray[index].direction)&&flago<1){
        double opposite1stAccelaration = gpsDataArray[indexOfOther].accelaration;
        opp1stindex=indexOfOther;
        flago==1;
     }
-  else if(flagf==2 && flago==1)
+  else if(flagf==3 || (flagf==2 && flago==1))
    break;
   indexOfOther--;
   }
@@ -177,13 +180,19 @@ void DecideOvertake()
   {
     double gapBetweentwoCar = haversine(gpsDataArray[front1stindex].latitude, gpsDataArray[front1stindex].longitude, gpsDataArray[front2ndindex].latitude, gpsDataArray[front2ndindex].longitude);
     gapBetweentwoCar = gapBetweentwoCar * 1000; // in meter
-    
+    if(flagf==2){
     double gapBetweentwoCarop = haversine(gpsDataArray[front2ndindex].latitude, gpsDataArray[front2ndindex].longitude, gpsDataArray[opp1stindex].latitude, gpsDataArray[opp1stindex].longitude);
     gapBetweentwoCarop = gapBetweentwoCarop * 1000; // in meter
+    }
 
     double carLength; // need to give a cars min length in meter
 
-    if (gapBetweentwoCar >= (carLength * 1.5) && front2ndAcclaration >= front1stAccelaration && gapBetweentwoCarop<1)
+    if (flagf==2 && gapBetweentwoCar >= (carLength * 1.5) && front2ndAcclaration >= front1stAccelaration && gapBetweentwoCarop<1)
+    {
+      Serial.println("Overtake");
+      overtake = "S";
+    }
+    else if (flagf==3 && gapBetweentwoCar >= (carLength * 1.5) && front2ndAcclaration >= front1stAccelaration)
     {
       Serial.println("Overtake");
       overtake = "S";
