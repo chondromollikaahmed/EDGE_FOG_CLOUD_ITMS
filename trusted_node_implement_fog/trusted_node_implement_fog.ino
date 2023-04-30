@@ -7,6 +7,8 @@
 #endif
 
 
+#include <ArduinoJson.h>
+
 
 #define NUMOFNODES 20
 esp_now_peer_info_t nodes[NUMOFNODES] = {};
@@ -15,6 +17,16 @@ int nodeCount = 0;
 
 #define CHANNEL 1
 #define PRINTSCANRESULTS 0
+
+
+const char* ssid = "edge-fog-cloud";
+const char* password = "cloud-fog-edge";
+
+// Need to Replace every one month with new link as free pie socket account expires every month 
+const char* webSocketServerURL = "wss://s8775.nyc1.piesocket.com/v3/1?api_key=7C9up7kPYDMSlgPGDPwwCvBCuyDdS7zbRjfKRB4e&notify_self=1";
+
+WebSocketsClient webSocket;
+
 
 
 // Init ESP Now with fallback
@@ -179,6 +191,31 @@ void formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength)
 }
 
 
+void sendDataToCloud(String data) {
+  
+// Keep WebSocket connection alive
+  webSocket.loop();
+
+//pharse latitude and longitude from data
+
+  String latitude = data.substring(data.indexOf("latitude:")+9,data.indexOf("longitude:"));
+  String longitude = data.substring(data.indexOf("longitude:")+10,data.indexOf("$"));
+  // Create and serialize a JSON object with the accident data
+  StaticJsonDocument<200> jsonDoc;
+  jsonDoc["message"] = "possible accident detected";
+  jsonDoc["latitude"] = latitude.toFloat();  
+  jsonDoc["longitude"] = longitude.toFloat(); 
+  jsonDoc["total_connected_nodes"] = nodeCount; 
+  String jsonStr;
+  serializeJson(jsonDoc, jsonStr);
+  // Send the JSON string to the WebSocket server
+  if (webSocket.readyState() == WebSocketClientState::Open) {
+    webSocket.sendTXT(jsonStr);
+    Serial.println("Message sent to server in JSON format.");
+  }
+
+
+}
 
 void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen)
 // Called when data is received
@@ -200,6 +237,15 @@ void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen)
 
   String msg ;
   msg=buffer;
+
+
+  // if message from edge device and start with ACC then send to cloud
+  if (msg.startsWith("ACC")) {
+    Serial.println("Sending to Cloud");
+    //extract the data from the message and send to cloud (possible accident detected,latitute,longitude,timestamp,deviceid,total nodes)
+
+    sendDataToCloud(msg);
+  }
   
 
 }
@@ -220,17 +266,41 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 
 
-
+void webSocketEvent(WStype_t eventType, uint8_t * payload, size_t length) {
+  // Handle WebSocket events
+  switch (eventType) {
+    case WStype_DISCONNECTED:
+      Serial.println("Disconnected from WebSocket server.");
+      break;
+    case WStype_CONNECTED:
+      Serial.println("Connected to WebSocket server.");
+      break;
+    case WStype_TEXT:
+      Serial.printf("Received message: %s\n", payload);
+      break;
+  }
 
 void setup() {
 
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+
+
+   // Set up WebSocket client
+  webSocket.begin(webSocketServerURL);
+  webSocket.onEvent(webSocketEvent);
 
 
    Serial.begin(115200);
   //Set device in STA mode to begin with
   WiFi.mode(WIFI_STA);
   Serial.println("Fog Device Will Run In Station Mode");
-  // This is the mac address of the Master in Station Mode
+  // This is the mac address of the FOG in Station Mode
   Serial.print("STA MAC: "); Serial.println(WiFi.macAddress());
   // Init ESPNow with a fallback logic
   InitESPNow();
