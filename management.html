@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <style>
+        div{
+            margin:10px;
+        }
+        #chatFormContainer {
+            text-align: center;
+            position: fixed;
+            bottom: 5px;
+            left: 5px;
+            right: 5px;
+        }
+
+        #chatFormContainer input {
+            display: inline-block;
+            width: 90%;
+            padding: 20px;
+        }
+
+       h1 {
+        text-align: center;
+        color: #333;
+        margin-top: 50px;
+      }
+
+
+ .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+      }
+
+    </style>
+    <script src="https://unpkg.com/piesocket-js@3"></script>
+</head>
+<body>
+
+ <h1>Possible Accident Detection</h1>
+    <div id="chatLog">
+
+    </div>
+    <div id="chatFormContainer">
+        <form id="chatForm">
+            <input id="chatMessage" placeholder="Type  message and press enter..." type="text">
+        </form>
+    </div>
+    <script>                
+        var username = "FOG_"+(Math.floor(Math.random() * 1000));
+        var chatLog = document.getElementById('chatLog');
+        var chatForm = document.getElementById('chatForm');
+        chatForm.addEventListener("submit", sendMessage);
+
+        var piesocket = new PieSocket({
+            clusterId: "s8775.nyc1",
+            apiKey: "7C9up7kPYDMSlgPGDPwwCvBCuyDdS7zbRjfKRB4e",
+            notifySelf: true,
+            presence: true,
+            userId: username
+        });
+
+        var channel;
+        piesocket.subscribe("chat-room").then( ch => {
+            channel = ch;
+
+            channel.listen("system:member_joined", function(data){
+                if(data.member.user == username){
+                    data.member.user = "<b>Cloud Server </b>";
+                }
+
+                chatLog.insertAdjacentHTML('afterend', `<div> ${data.member.user} Is Now Connected To The Server <div>`);
+            })
+
+            channel.listen("new_message", function(data, meta){
+                if(data.sender == username){
+                    data.sender = "<b>You</b>";
+                }
+
+                chatLog.insertAdjacentHTML('afterend', `<div> ${data.sender}: ${data.text} <div>`);
+            })
+
+        });
+
+        function sendMessage(e) {
+            e.preventDefault();
+
+            if(!channel){
+                alert("Channel is not connected yet, wait a sec");
+                return;
+            }
+
+            var message = document.getElementById('chatMessage').value;
+
+            channel.publish("new_message", {
+                sender: username,
+                text: message
+            });
+        }
+    </script>
+</body>
+</html>
